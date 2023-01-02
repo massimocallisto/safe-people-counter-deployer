@@ -1,0 +1,45 @@
+version: '3.3'
+services:
+  telegraf:
+    image: arm32v7/telegraf:1.22
+    volumes:
+    - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+    links:
+      - influxdb
+  influxdb:
+    image: arm32v7/influxdb:1.8.10
+    privileged: true
+    env_file: configuration.env
+    ports:
+      - '8086:8086'
+    volumes:
+ #     - ./:/imports
+      - influxdb_data:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:9.0.9
+    depends_on:
+      - influxdb
+    env_file: configuration.env
+    links:
+      - influxdb
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - 1883:1883
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
+  mqtt-tz:
+    image: docker.smartplatform.io/people-counter-tz:1.0.0
+    environment:
+      MQTT_HOST: mosquitto
+ 
+volumes:
+  grafana_data: {}
+  influxdb_data: {}
